@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { InvoiceForm } from "@/components/forms/InvoiceForm";
+import { InvoiceGenerator } from "@/components/invoice/InvoiceGenerator";
 import { 
   FileText, 
   Plus, 
@@ -12,7 +14,7 @@ import {
   Printer
 } from "lucide-react";
 
-const sampleInvoices = [
+const initialInvoices = [
   {
     id: "INV-001",
     orderId: "ORD-001",
@@ -111,24 +113,37 @@ const getStatusColor = (status: string) => {
 };
 
 const Invoices = () => {
+  const [invoices, setInvoices] = useState(initialInvoices);
+  const [showForm, setShowForm] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const { toast } = useToast();
 
-  const handleAction = (action: string, invoiceId: string) => {
+  const handleAction = (action: string, invoiceId: string, invoice?: any) => {
+    if (action === "View Invoice" && invoice) {
+      setSelectedInvoice(invoice);
+      setShowInvoice(true);
+      return;
+    }
+    
     toast({
       title: action,
       description: `${action} for invoice ${invoiceId}`,
     });
   };
 
-  const invoiceStats = {
-    total: sampleInvoices.length,
-    paid: sampleInvoices.filter(i => i.status === "Paid").length,
-    pending: sampleInvoices.filter(i => i.status === "Pending").length,
-    overdue: sampleInvoices.filter(i => i.status === "Overdue").length,
-    totalAmount: sampleInvoices.reduce((sum, inv) => sum + inv.total, 0),
-    paidAmount: sampleInvoices.filter(i => i.status === "Paid").reduce((sum, inv) => sum + inv.total, 0)
+  const handleAddInvoice = (newInvoice: any) => {
+    setInvoices([newInvoice, ...invoices]);
   };
 
+  const invoiceStats = {
+    total: invoices.length,
+    paid: invoices.filter(i => i.status === "Paid").length,
+    pending: invoices.filter(i => i.status === "Pending").length,
+    overdue: invoices.filter(i => i.status === "Overdue").length,
+    totalAmount: invoices.reduce((sum, inv) => sum + inv.total, 0),
+    paidAmount: invoices.filter(i => i.status === "Paid").reduce((sum, inv) => sum + inv.total, 0)
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -141,7 +156,7 @@ const Invoices = () => {
         </div>
         <Button 
           className="mt-4 md:mt-0"
-          onClick={() => handleAction("Create New Invoice", "")}
+          onClick={() => setShowForm(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           New Invoice
@@ -186,7 +201,7 @@ const Invoices = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {sampleInvoices.map((invoice) => (
+            {invoices.map((invoice) => (
               <div key={invoice.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -219,7 +234,7 @@ const Invoices = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => handleAction("View Invoice", invoice.id)}
+                    onClick={() => handleAction("View Invoice", invoice.id, invoice)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -250,6 +265,18 @@ const Invoices = () => {
           </div>
         </CardContent>
       </Card>
+
+      <InvoiceForm 
+        open={showForm} 
+        onOpenChange={setShowForm} 
+        onSubmit={handleAddInvoice} 
+      />
+
+      <InvoiceGenerator 
+        open={showInvoice} 
+        onOpenChange={setShowInvoice} 
+        invoice={selectedInvoice} 
+      />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentForm } from "@/components/forms/PaymentForm";
 import { 
   CreditCard, 
   Plus, 
@@ -12,7 +13,7 @@ import {
   Clock
 } from "lucide-react";
 
-const samplePayments = [
+const initialPayments = [
   {
     id: "PAY-001",
     invoiceId: "INV-001",
@@ -118,6 +119,8 @@ const getMethodColor = (method: string) => {
 };
 
 const Payments = () => {
+  const [payments, setPayments] = useState(initialPayments);
+  const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
   const handleAction = (action: string, paymentId: string) => {
@@ -127,15 +130,18 @@ const Payments = () => {
     });
   };
 
-  const paymentStats = {
-    total: samplePayments.length,
-    completed: samplePayments.filter(p => p.status === "Completed").length,
-    pending: samplePayments.filter(p => p.status === "Pending").length,
-    partial: samplePayments.filter(p => p.status === "Partial").length,
-    totalAmount: samplePayments.filter(p => p.status === "Completed").reduce((sum, p) => sum + p.amount, 0),
-    pendingAmount: samplePayments.filter(p => p.status === "Pending").reduce((sum, p) => sum + p.amount, 0)
+  const handleAddPayment = (newPayment: any) => {
+    setPayments([newPayment, ...payments]);
   };
 
+  const paymentStats = {
+    total: payments.length,
+    completed: payments.filter(p => p.status === "Completed").length,
+    pending: payments.filter(p => p.status === "Pending").length,
+    partial: payments.filter(p => p.status === "Partial").length,
+    totalAmount: payments.filter(p => p.status === "Completed").reduce((sum, p) => sum + p.amount, 0),
+    pendingAmount: payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + p.amount, 0)
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -148,7 +154,7 @@ const Payments = () => {
         </div>
         <Button 
           className="mt-4 md:mt-0"
-          onClick={() => handleAction("Record New Payment", "")}
+          onClick={() => setShowForm(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Record Payment
@@ -237,7 +243,7 @@ const Payments = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {samplePayments.map((payment) => (
+            {payments.map((payment) => (
               <div key={payment.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -291,6 +297,12 @@ const Payments = () => {
           </div>
         </CardContent>
       </Card>
+
+      <PaymentForm 
+        open={showForm} 
+        onOpenChange={setShowForm} 
+        onSubmit={handleAddPayment} 
+      />
     </div>
   );
 };

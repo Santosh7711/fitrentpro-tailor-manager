@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { OrderForm } from "@/components/forms/OrderForm";
 import { 
   Plus, 
   Package, 
@@ -121,6 +122,8 @@ const getStatusColor = (status: string) => {
 };
 
 const Orders = () => {
+  const [orders, setOrders] = useState(sampleOrders);
+  const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
   const handleAction = (action: string, orderId: string) => {
@@ -130,14 +133,17 @@ const Orders = () => {
     });
   };
 
-  const orderStats = {
-    total: sampleOrders.length,
-    pending: sampleOrders.filter(o => o.status === "Pending").length,
-    inProgress: sampleOrders.filter(o => o.status === "In Progress").length,
-    ready: sampleOrders.filter(o => o.status === "Ready").length,
-    delivered: sampleOrders.filter(o => o.status === "Delivered").length
+  const handleAddOrder = (newOrder: any) => {
+    setOrders([newOrder, ...orders]);
   };
 
+  const orderStats = {
+    total: orders.length,
+    pending: orders.filter(o => o.status === "Pending").length,
+    inProgress: orders.filter(o => o.status === "In Progress").length,
+    ready: orders.filter(o => o.status === "Ready").length,
+    delivered: orders.filter(o => o.status === "Delivered").length
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -150,7 +156,7 @@ const Orders = () => {
         </div>
         <Button 
           className="mt-4 md:mt-0"
-          onClick={() => handleAction("Create New Order", "")}
+          onClick={() => setShowForm(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           New Order
@@ -201,7 +207,7 @@ const Orders = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {sampleOrders.map((order) => (
+            {orders.map((order) => (
               <div key={order.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -256,6 +262,12 @@ const Orders = () => {
           </div>
         </CardContent>
       </Card>
+
+      <OrderForm 
+        open={showForm} 
+        onOpenChange={setShowForm} 
+        onSubmit={handleAddOrder} 
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { CustomerForm } from "@/components/forms/CustomerForm";
 import { 
   Plus, 
   Search, 
@@ -99,9 +100,11 @@ const getStatusColor = (status: string) => {
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [customers, setCustomers] = useState(sampleCustomers);
+  const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
-  const filteredCustomers = sampleCustomers.filter(customer =>
+  const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -114,6 +117,9 @@ const Customers = () => {
     });
   };
 
+  const handleAddCustomer = (newCustomer: any) => {
+    setCustomers([newCustomer, ...customers]);
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -126,7 +132,7 @@ const Customers = () => {
         </div>
         <Button 
           className="mt-4 md:mt-0"
-          onClick={() => handleAction("Add New Customer", "")}
+          onClick={() => setShowForm(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Customer
@@ -155,19 +161,19 @@ const Customers = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-primary">{sampleCustomers.length}</div>
+            <div className="text-2xl font-bold text-primary">{customers.length}</div>
             <p className="text-sm text-muted-foreground">Total Customers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-accent">{sampleCustomers.filter(c => c.status === "VIP").length}</div>
+            <div className="text-2xl font-bold text-accent">{customers.filter(c => c.status === "VIP").length}</div>
             <p className="text-sm text-muted-foreground">VIP Customers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-success">{sampleCustomers.filter(c => c.status === "New").length}</div>
+            <div className="text-2xl font-bold text-success">{customers.filter(c => c.status === "New").length}</div>
             <p className="text-sm text-muted-foreground">New This Month</p>
           </CardContent>
         </Card>
@@ -240,6 +246,12 @@ const Customers = () => {
           </div>
         </CardContent>
       </Card>
+
+      <CustomerForm 
+        open={showForm} 
+        onOpenChange={setShowForm} 
+        onSubmit={handleAddCustomer} 
+      />
     </div>
   );
 };
