@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
@@ -28,7 +28,9 @@ const navigation = [
 ];
 
 export function AppLayout() {
-  const [activeItem, setActiveItem] = useState("/");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeItem, setActiveItem] = useState(location.pathname);
 
   const NavItem = ({ item, onClick }: { item: any; onClick?: () => void }) => (
     <Button
@@ -41,6 +43,7 @@ export function AppLayout() {
       )}
       onClick={() => {
         setActiveItem(item.href);
+        navigate(item.href);
         onClick?.();
       }}
     >
