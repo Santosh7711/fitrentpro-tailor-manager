@@ -1,8 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { OrderForm } from "@/components/forms/OrderForm";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import { 
   Plus, 
   Package, 
@@ -10,10 +25,14 @@ import {
   CheckCircle, 
   Eye,
   Edit,
-  Truck
+  Truck,
+  TrendingUp,
+  Calendar
 } from "lucide-react";
 
-const sampleOrders = [
+const useState = React.useState;
+
+const extendedSampleOrders = [
   {
     id: "ORD-001",
     customerId: "CUST-001",
@@ -27,7 +46,8 @@ const sampleOrders = [
     deliveryDate: "2024-01-30",
     returnDate: "2024-02-05",
     status: "In Progress",
-    progress: "Stitching"
+    progress: "Stitching",
+    progressPercent: 65
   },
   {
     id: "ORD-002",
@@ -42,7 +62,8 @@ const sampleOrders = [
     deliveryDate: "2024-02-05",
     returnDate: "2024-02-10",
     status: "Ready",
-    progress: "Quality Check"
+    progress: "Quality Check",
+    progressPercent: 95
   },
   {
     id: "ORD-003",
@@ -57,7 +78,8 @@ const sampleOrders = [
     deliveryDate: "2024-02-08",
     returnDate: "2024-02-12",
     status: "Delivered",
-    progress: "Completed"
+    progress: "Completed",
+    progressPercent: 100
   },
   {
     id: "ORD-004",
@@ -72,7 +94,8 @@ const sampleOrders = [
     deliveryDate: "2024-02-12",
     returnDate: "2024-02-16",
     status: "Pending",
-    progress: "Measurement"
+    progress: "Measurement",
+    progressPercent: 15
   },
   {
     id: "ORD-005",
@@ -87,7 +110,8 @@ const sampleOrders = [
     deliveryDate: "2024-02-15",
     returnDate: "2024-02-20",
     status: "In Progress",
-    progress: "Cutting"
+    progress: "Cutting",
+    progressPercent: 35
   },
   {
     id: "ORD-006",
@@ -102,8 +126,67 @@ const sampleOrders = [
     deliveryDate: "2024-02-18",
     returnDate: "2024-02-22",
     status: "Ready",
-    progress: "Packaging"
+    progress: "Packaging",
+    progressPercent: 90
+  },
+  {
+    id: "ORD-007",
+    customerId: "CUST-007",
+    customerName: "Vikram Singh",
+    item: "Cream Silk Kurta Set",
+    size: "XL",
+    rentPrice: "₹1,500",
+    alterationCost: "₹100",
+    totalAmount: "₹1,600",
+    orderDate: "2024-02-05",
+    deliveryDate: "2024-02-20",
+    returnDate: "2024-02-25",
+    status: "In Progress",
+    progress: "Stitching",
+    progressPercent: 55
+  },
+  {
+    id: "ORD-008",
+    customerId: "CUST-008",
+    customerName: "Kavya Nair",
+    item: "Emerald Green Lehenga",
+    size: "M",
+    rentPrice: "₹4,500",
+    alterationCost: "₹600",
+    totalAmount: "₹5,100",
+    orderDate: "2024-02-07",
+    deliveryDate: "2024-02-22",
+    returnDate: "2024-02-26",
+    status: "Pending",
+    progress: "Design Approval",
+    progressPercent: 10
   }
+];
+
+const orderTrendData = [
+  { month: 'Sep', orders: 18, completed: 16, revenue: 45000 },
+  { month: 'Oct', orders: 22, completed: 20, revenue: 52000 },
+  { month: 'Nov', orders: 25, completed: 23, revenue: 58000 },
+  { month: 'Dec', orders: 28, completed: 26, revenue: 65000 },
+  { month: 'Jan', orders: 32, completed: 30, revenue: 72000 },
+  { month: 'Feb', orders: 35, completed: 32, revenue: 78000 }
+];
+
+const orderStatusDistribution = [
+  { name: 'Delivered', value: 35, count: 28, color: '#2ECC71' },
+  { name: 'Ready', value: 25, count: 20, color: '#F39C12' },
+  { name: 'In Progress', value: 30, count: 24, color: '#3498DB' },
+  { name: 'Pending', value: 10, count: 8, color: '#95A5A6' }
+];
+
+const weeklyOrderData = [
+  { day: 'Mon', orders: 4, completed: 3 },
+  { day: 'Tue', orders: 6, completed: 5 },
+  { day: 'Wed', orders: 5, completed: 4 },
+  { day: 'Thu', orders: 8, completed: 7 },
+  { day: 'Fri', orders: 9, completed: 8 },
+  { day: 'Sat', orders: 12, completed: 10 },
+  { day: 'Sun', orders: 7, completed: 6 }
 ];
 
 const getStatusColor = (status: string) => {
@@ -122,7 +205,7 @@ const getStatusColor = (status: string) => {
 };
 
 const Orders = () => {
-  const [orders, setOrders] = useState(sampleOrders);
+  const [orders, setOrders] = useState(extendedSampleOrders);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
@@ -142,8 +225,11 @@ const Orders = () => {
     pending: orders.filter(o => o.status === "Pending").length,
     inProgress: orders.filter(o => o.status === "In Progress").length,
     ready: orders.filter(o => o.status === "Ready").length,
-    delivered: orders.filter(o => o.status === "Delivered").length
+    delivered: orders.filter(o => o.status === "Delivered").length,
+    totalRevenue: orders.reduce((sum, order) => sum + parseInt(order.totalAmount.replace('₹', '').replace(',', '')), 0),
+    avgOrderValue: Math.round(orders.reduce((sum, order) => sum + parseInt(order.totalAmount.replace('₹', '').replace(',', '')), 0) / orders.length)
   };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -164,7 +250,7 @@ const Orders = () => {
       </div>
 
       {/* Order Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="text-2xl font-bold text-primary">{orderStats.total}</div>
@@ -195,7 +281,115 @@ const Orders = () => {
             <p className="text-sm text-muted-foreground">Delivered</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold text-accent">₹{orderStats.avgOrderValue.toLocaleString()}</div>
+            <p className="text-sm text-muted-foreground">Avg Order Value</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Order Trends (6 Months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={orderTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Area 
+                  type="monotone" 
+                  dataKey="orders" 
+                  stroke="#1F3A93" 
+                  fill="#1F3A93" 
+                  fillOpacity={0.3}
+                  name="Total Orders"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="completed" 
+                  stroke="#2ECC71" 
+                  fill="#2ECC71" 
+                  fillOpacity={0.3}
+                  name="Completed Orders"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Order Status Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={orderStatusDistribution}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}%`}
+                >
+                  {orderStatusDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {orderStatusDistribution.map((item, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  <span className="font-medium">{item.count} orders</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Weekly Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Weekly Order Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={weeklyOrderData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="orders" fill="#1F3A93" name="Total Orders" />
+              <Bar dataKey="completed" fill="#2ECC71" name="Completed Orders" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Orders List */}
       <Card>
@@ -216,6 +410,13 @@ const Orders = () => {
                       {order.status}
                     </Badge>
                     <span className="text-sm text-muted-foreground">• {order.progress}</span>
+                  </div>
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                      <span>Progress</span>
+                      <span>{order.progressPercent}%</span>
+                    </div>
+                    <Progress value={order.progressPercent} className="h-2" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>

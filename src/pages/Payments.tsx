@@ -3,6 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentForm } from "@/components/forms/PaymentForm";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
 import { 
   CreditCard, 
   Plus, 
@@ -10,10 +26,14 @@ import {
   DollarSign,
   Calendar,
   CheckCircle,
-  Clock
+  Clock,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 
-const initialPayments = [
+const useState = React.useState;
+
+const extendedPayments = [
   {
     id: "PAY-001",
     invoiceId: "INV-001",
@@ -85,7 +105,112 @@ const initialPayments = [
     status: "Completed",
     transactionId: "CASH002", 
     notes: "Full payment in cash"
+  },
+  {
+    id: "PAY-007",
+    invoiceId: "INV-008",
+    customerName: "Kavya Nair",
+    orderId: "ORD-008",
+    amount: 5100,
+    paymentMethod: "UPI",
+    paymentDate: "2024-02-14",
+    status: "Completed",
+    transactionId: "UPI456789123",
+    notes: "Payment via Paytm"
+  },
+  {
+    id: "PAY-008",
+    invoiceId: "INV-009",
+    customerName: "Arjun Mehta",
+    orderId: "ORD-009",
+    amount: 2800,
+    paymentMethod: "Credit Card",
+    paymentDate: "2024-02-15",
+    status: "Completed",
+    transactionId: "CC789456123",
+    notes: "Visa card payment"
+  },
+  {
+    id: "PAY-009",
+    invoiceId: "INV-010",
+    customerName: "Deepika Rao",
+    orderId: "ORD-010",
+    amount: 1950,
+    paymentMethod: "Bank Transfer",
+    paymentDate: "2024-02-16",
+    status: "Completed",
+    transactionId: "NEFT123789456",
+    notes: "HDFC Bank transfer"
+  },
+  {
+    id: "PAY-010",
+    invoiceId: "INV-011",
+    customerName: "Rohit Sharma",
+    orderId: "ORD-011",
+    amount: 3600,
+    paymentMethod: "UPI",
+    paymentDate: null,
+    status: "Pending",
+    transactionId: null,
+    notes: "Follow up required"
+  },
+  {
+    id: "PAY-011",
+    invoiceId: "INV-012",
+    customerName: "Sneha Iyer",
+    orderId: "ORD-012",
+    amount: 2200,
+    paymentMethod: "Cash",
+    paymentDate: "2024-02-17",
+    status: "Completed",
+    transactionId: "CASH003",
+    notes: "Cash payment with receipt"
+  },
+  {
+    id: "PAY-012",
+    invoiceId: "INV-013",
+    customerName: "Karan Singh",
+    orderId: "ORD-013",
+    amount: 4200,
+    paymentMethod: "Credit Card",
+    paymentDate: "2024-02-18",
+    status: "Failed",
+    transactionId: "CC456123789",
+    notes: "Card declined - insufficient funds"
   }
+];
+
+const paymentTrendData = [
+  { month: 'Sep', amount: 45000, transactions: 18, avgAmount: 2500 },
+  { month: 'Oct', amount: 52000, transactions: 22, avgAmount: 2364 },
+  { month: 'Nov', amount: 58000, transactions: 25, avgAmount: 2320 },
+  { month: 'Dec', amount: 65000, transactions: 28, avgAmount: 2321 },
+  { month: 'Jan', amount: 72000, transactions: 32, avgAmount: 2250 },
+  { month: 'Feb', amount: 78000, transactions: 35, avgAmount: 2229 }
+];
+
+const paymentMethodData = [
+  { name: 'UPI', value: 45, amount: 156000, color: '#1F3A93' },
+  { name: 'Cash', value: 25, amount: 87000, color: '#2ECC71' },
+  { name: 'Credit Card', value: 20, amount: 69000, color: '#F39C12' },
+  { name: 'Bank Transfer', value: 10, amount: 35000, color: '#9B59B6' }
+];
+
+const dailyPaymentData = [
+  { day: 'Mon', amount: 8500, count: 4 },
+  { day: 'Tue', amount: 12000, count: 6 },
+  { day: 'Wed', amount: 9500, count: 5 },
+  { day: 'Thu', amount: 15000, count: 8 },
+  { day: 'Fri', amount: 18000, count: 9 },
+  { day: 'Sat', amount: 22000, count: 12 },
+  { day: 'Sun', amount: 14000, count: 7 }
+];
+
+const paymentStatusTrend = [
+  { week: 'W1', completed: 85, pending: 10, failed: 5 },
+  { week: 'W2', completed: 88, pending: 8, failed: 4 },
+  { week: 'W3', completed: 92, pending: 6, failed: 2 },
+  { week: 'W4', completed: 89, pending: 9, failed: 2 }
 ];
 
 const getStatusColor = (status: string) => {
@@ -119,7 +244,7 @@ const getMethodColor = (method: string) => {
 };
 
 const Payments = () => {
-  const [payments, setPayments] = useState(initialPayments);
+  const [payments, setPayments] = useState(extendedPayments);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
@@ -139,9 +264,13 @@ const Payments = () => {
     completed: payments.filter(p => p.status === "Completed").length,
     pending: payments.filter(p => p.status === "Pending").length,
     partial: payments.filter(p => p.status === "Partial").length,
+    failed: payments.filter(p => p.status === "Failed").length,
     totalAmount: payments.filter(p => p.status === "Completed").reduce((sum, p) => sum + p.amount, 0),
-    pendingAmount: payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + p.amount, 0)
+    pendingAmount: payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + p.amount, 0),
+    avgPayment: Math.round(payments.filter(p => p.status === "Completed").reduce((sum, p) => sum + p.amount, 0) / payments.filter(p => p.status === "Completed").length),
+    successRate: Math.round((payments.filter(p => p.status === "Completed").length / payments.length) * 100)
   };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -162,7 +291,7 @@ const Payments = () => {
       </div>
 
       {/* Payment Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="text-2xl font-bold text-success">₹{paymentStats.totalAmount.toLocaleString()}</div>
@@ -185,6 +314,140 @@ const Payments = () => {
           <CardContent className="p-6">
             <div className="text-2xl font-bold text-muted-foreground">{paymentStats.pending}</div>
             <p className="text-sm text-muted-foreground">Pending</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold text-accent">₹{paymentStats.avgPayment.toLocaleString()}</div>
+            <p className="text-sm text-muted-foreground">Avg Payment</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold text-success">{paymentStats.successRate}%</div>
+            <p className="text-sm text-muted-foreground">Success Rate</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Payment Trends (6 Months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={paymentTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value, name) => [
+                  name === 'amount' ? `₹${value.toLocaleString()}` : value,
+                  name === 'amount' ? 'Amount' : name === 'transactions' ? 'Transactions' : 'Avg Amount'
+                ]} />
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#1F3A93" 
+                  fill="#1F3A93" 
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Payment Methods
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={paymentMethodData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}%`}
+                >
+                  {paymentMethodData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {paymentMethodData.map((item, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  <span className="font-medium">₹{item.amount.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Daily Payment Volume
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dailyPaymentData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip formatter={(value, name) => [
+                  name === 'amount' ? `₹${value.toLocaleString()}` : value,
+                  name === 'amount' ? 'Amount' : 'Count'
+                ]} />
+                <Bar dataKey="amount" fill="#1F3A93" name="Amount" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              Payment Success Rate Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={paymentStatusTrend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="week" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value}%`, '']} />
+                <Line type="monotone" dataKey="completed" stroke="#2ECC71" strokeWidth={2} name="Completed" />
+                <Line type="monotone" dataKey="pending" stroke="#F39C12" strokeWidth={2} name="Pending" />
+                <Line type="monotone" dataKey="failed" stroke="#E74C3C" strokeWidth={2} name="Failed" />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

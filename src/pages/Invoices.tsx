@@ -14,6 +14,8 @@ import {
   Printer
 } from "lucide-react";
 
+const useState = React.useState;
+
 const initialInvoices = [
   {
     id: "INV-001",
